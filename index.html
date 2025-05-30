@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>1010101010 - Mass Psychosis</title>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Courier New', monospace;
+    }
+
+    body {
+      background-color: #0a0a0a;
+      color: #00ff00;
+      overflow: hidden;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background-color: rgba(10, 10, 10, 0.7);
+    }
+
+    .social-links {
+      display: flex;
+      gap: 15px;
+    }
+
+    .social-links a {
+      color: #00ff00;
+      font-size: 20px;
+      transition: color 0.3s;
+    }
+
+    .social-links a:hover {
+      color: #ffffff;
+    }
+
+    .contract-address {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background-color: rgba(0, 255, 0, 0.1);
+      padding: 8px 15px;
+      border-radius: 20px;
+      border: 1px solid rgba(0, 255, 0, 0.3);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .contract-address:hover {
+      background-color: rgba(0, 255, 0, 0.2);
+      border-color: rgba(0, 255, 0, 0.5);
+    }
+
+    .copy-icon {
+      font-size: 16px;
+    }
+
+    .canvas-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .binary-rain {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .binary-digit {
+      position: absolute;
+      color: rgba(0, 255, 0, 0.5);
+      font-size: 14px;
+      user-select: none;
+      animation: fall linear infinite;
+    }
+
+    @keyframes fall {
+      to {
+        transform: translateY(100vh);
+      }
+    }
+
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(0, 255, 0, 0.2);
+      color: #00ff00;
+      padding: 10px 20px;
+      border-radius: 5px;
+      border: 1px solid rgba(0, 255, 0, 0.5);
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 1000;
+    }
+
+    .notification.show {
+      opacity: 1;
+    }
+
+    .title {
+      position: fixed;
+      top: 80px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 3rem;
+      color: #00ff00;
+      text-shadow: 0 0 10px rgba(0, 255, 0, 0.7);
+      z-index: 50;
+      opacity: 0.9;
+      letter-spacing: 0.5rem;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      position: fixed;
+      top: 140px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 1.5rem;
+      color: #00ff00;
+      text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+      z-index: 50;
+    }
+
+    .video-frame {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2;
+    }
+
+    .framed-video {
+      width: 100%;
+      height: 100%;
+      max-width: 1600px;
+      max-height: 900px;
+      border: 2px solid #00ff00;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <div class="social-links">
+      <a href="https://x.com/i/communities/1928322628961423607" target="_blank"><i class="fab fa-twitter"></i></a>
+      <a href="https://www.reddit.com/r/OpenAI/comments/1kxarh3/mass_psychosis_incoming/" target="_blank"><i
+          class="fas fa-globe"></i></a>
+    </div>
+    <div class="contract-address" id="contractAddress">
+      <span>5QeH8oJtjq7UsiUtWAWhedpS8Ehi7k9HLMyFsvmxpump</span>
+      <i class="far fa-copy copy-icon"></i>
+    </div>
+  </div>
+
+  <h1 class="title">Mass Psychosis</h1>
+  <h2 class="subtitle">Once assemblies complete, we are forced into digital label</h2>
+
+  <div class="video-frame" id="videoFrame">
+    <video src="/assets/video.mp4" controls class="framed-video" poster=""></video>
+  </div>
+
+  <div class="canvas-container" id="canvasContainer"></div>
+  <div class="binary-rain" id="binaryRain"></div>
+
+  <div class="notification" id="notification">
+    Contract address copied to clipboard!
+  </div>
+
+  <script>
+    // Binary rain effect
+    const binaryRain = document.getElementById('binaryRain');
+    const digits = ['0', '1'];
+    const binaryElements = [];
+
+    function createBinaryRain() {
+      const columns = Math.floor(window.innerWidth / 20);
+
+      for (let i = 0; i < columns; i++) {
+        const digit = document.createElement('div');
+        digit.className = 'binary-digit';
+        digit.textContent = digits[Math.floor(Math.random() * digits.length)];
+        digit.style.left = `${(i * 20) + Math.random() * 10}px`;
+        digit.style.top = `${-Math.random() * 100}px`;
+        digit.style.animationDuration = `${5 + Math.random() * 10}s`;
+        digit.style.animationDelay = `${Math.random() * 5}s`;
+        binaryRain.appendChild(digit);
+        binaryElements.push(digit);
+      }
+    }
+
+    createBinaryRain();
+
+    // Three.js animation
+    const container = document.getElementById('canvasContainer');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    container.appendChild(renderer.domElement);
+
+    // Human shape represented by binary digits
+    const humanShape = [
+      // Head
+      [0, 1.8, 0],
+      // Shoulders
+      [-0.5, 1.5, 0], [0.5, 1.5, 0],
+      // Torso
+      [0, 1.2, 0], [0, 0.9, 0], [0, 0.6, 0],
+      // Arms
+      [-0.8, 1.2, 0], [0.8, 1.2, 0],
+      [-0.8, 0.9, 0], [0.8, 0.9, 0],
+      // Hips
+      [-0.4, 0.3, 0], [0.4, 0.3, 0],
+      // Legs
+      [-0.4, 0, 0], [0.4, 0, 0],
+      [-0.4, -0.6, 0], [0.4, -0.6, 0],
+      [-0.4, -1.2, 0], [0.4, -1.2, 0]
+    ];
+
+    const binaryParticles = [];
+    const particleGroup = new THREE.Group();
+    scene.add(particleGroup);
+
+    // Create binary particles in human shape
+    humanShape.forEach((pos, index) => {
+      const geometry = new THREE.BufferGeometry();
+      const material = new THREE.PointsMaterial({
+        color: 0x00ff00,
+        size: 0.1,
+        transparent: true,
+        opacity: 0
+      });
+
+      const digit = Math.random() > 0.5 ? '1' : '0';
+      const textShape = new THREE.TextGeometry(digit, {
+        size: 0.2,
+        height: 0.01,
+        font: 'https://cdn.jsdelivr.net/npm/three@0.132.2/examples/fonts/helvetiker_regular.typeface.json'
+      });
+
+      const mesh = new THREE.Mesh(textShape, new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
+      mesh.position.set(pos[0], pos[1], pos[2]);
+      mesh.visible = false;
+      particleGroup.add(mesh);
+      binaryParticles.push({
+        mesh,
+        material,
+        targetPosition: new THREE.Vector3(pos[0], pos[1], pos[2]),
+        startPosition: new THREE.Vector3(
+          (Math.random() - 0.5) * 10,
+          (Math.random() - 0.5) * 10,
+          (Math.random() - 0.5) * 10
+        ),
+        speed: Math.random() * 0.02 + 0.01,
+        delay: index * 200,
+        visible: false
+      });
+    });
+
+    // Camera position
+    camera.position.z = 5;
+
+    // Animation timeline
+    let animationTime = 0;
+    const animationDuration = 10000; // 10 seconds
+
+    // Animation function
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // Animate binary particles forming human shape
+      binaryParticles.forEach((particle, index) => {
+        if (animationTime > particle.delay) {
+          if (!particle.visible) {
+            particle.mesh.visible = true;
+            particle.visible = true;
+          }
+
+          // Move particle toward its target position
+          const progress = Math.min(1, (animationTime - particle.delay) / 1000);
+          particle.mesh.position.lerpVectors(
+            particle.startPosition,
+            particle.targetPosition,
+            progress
+          );
+
+          // Random float effect after formation
+          if (progress >= 1) {
+            const floatIntensity = 0.05;
+            particle.mesh.position.x = particle.targetPosition.x + Math.sin(animationTime * 0.001 + index) * floatIntensity;
+            particle.mesh.position.y = particle.targetPosition.y + Math.cos(animationTime * 0.001 + index) * floatIntensity;
+          }
+        }
+      });
+
+      // Reset animation after completion
+      if (animationTime > animationDuration) {
+        animationTime = 0;
+        binaryParticles.forEach(particle => {
+          particle.mesh.position.copy(particle.startPosition);
+          particle.mesh.visible = false;
+          particle.visible = false;
+        });
+      }
+
+      animationTime += 16; // Approximate 60fps
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Copy contract address functionality
+    const contractAddress = document.getElementById('contractAddress');
+    const notification = document.getElementById('notification');
+
+    contractAddress.addEventListener('click', () => {
+      const address = '0x1A4...1a1A1a1ij';
+      navigator.clipboard.writeText(address).then(() => {
+        notification.classList.add('show');
+        setTimeout(() => {
+          notification.classList.remove('show');
+        }, 2000);
+      });
+    });
+  </script>
+</body>
+
+</html>
